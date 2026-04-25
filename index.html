@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Apex Angler | Global DB</title>
+    <style>
+        :root {
+            --bg: #05080a;
+            --glass: rgba(22, 27, 34, 0.9);
+            --accent: #00f2ff;
+            --green: #39ff14;
+            --text: #ffffff;
+            --text-dim: #94a3b8;
+            --danger: #ff4b4b;
+        }
+
+        body, html {
+            margin: 0; padding: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            height: 100vh; width: 100vw;
+            overflow: hidden;
+        }
+
+        .screen { display: none; height: 100vh; width: 100vw; flex-direction: column; }
+        .active-screen { display: flex; }
+
+        /* Scanning Overlay */
+        #vision-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 100;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .scan-line {
+            width: 80%; height: 2px; background: var(--accent);
+            box-shadow: 0 0 15px var(--accent);
+            position: absolute; animation: scan 2s infinite;
+        }
+        @keyframes scan { from { top: 20%; } to { top: 80%; } }
+
+        /* UI Elements */
+        header { padding: 20px; display: flex; justify-content: space-between; border-bottom: 1px solid #1e293b; }
+        main { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 100px; }
+        
+        .fish-data-card {
+            background: var(--glass); border-radius: 20px; padding: 20px;
+            border: 1px solid var(--accent); margin-top: 20px;
+            animation: slideIn 0.5s ease;
+        }
+        @keyframes slideIn { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        .tag { font-size: 0.6rem; padding: 4px 8px; border-radius: 4px; font-weight: bold; text-transform: uppercase; margin-right: 5px; }
+        .tag-safe { background: var(--green); color: black; }
+        .tag-danger { background: var(--danger); color: white; }
+
+        #map-area { flex: 1; background: #080c10; position: relative; }
+        .pin { position: absolute; color: var(--green); transform: translate(-50%, -50%); cursor: pointer; }
+
+        nav {
+            position: fixed; bottom: 15px; left: 15px; right: 15px;
+            background: rgba(15, 23, 42, 0.95); height: 65px; border-radius: 20px;
+            display: flex; justify-content: space-around; align-items: center;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .nav-icon { font-size: 1.5rem; cursor: pointer; opacity: 0.5; }
+        .nav-active { opacity: 1; color: var(--accent); }
+    </style>
+</head>
+<body>
+
+    <div id="vision-overlay">
+        <div class="scan-line"></div>
+        <p style="margin-top: 100px; font-weight: bold; letter-spacing: 2px;">SCANNING GLOBAL DATABASE...</p>
+        <p style="font-size: 0.8rem; color: var(--accent);">Referencing 30,000+ Species</p>
+    </div>
+
+    <div id="dash" class="screen active-screen">
+        <header><div>APEX <span style="color:var(--accent)">RILEY</span></div></header>
+        <main>
+            <div style="background: #111; padding: 20px; border-radius: 20px; margin-bottom: 20px;">
+                <h3 style="margin: 0;">Riley's Vision System</h3>
+                <p style="font-size: 0.8rem; color: var(--text-dim);">Global Fish DB: Connected v2.06</p>
+            </div>
+
+            <button onclick="startScanning()" style="width: 100%; padding: 20px; border-radius: 20px; background: white; color: black; font-weight: 900; border: none; font-size: 1rem;">
+                📷 SCAN & IDENTIFY FISH
+            </button>
+
+            <div id="id-result"></div>
+        </main>
+    </div>
+
+    <div id="map-view" class="screen">
+        <header><div>RILEY'S HOTSPOTS</div></header>
+        <div id="map-area"></div>
+    </div>
+
+    <div id="profile" class="screen">
+        <header><div>GLOBAL LOG</div></header>
+        <main id="log-list">
+            <p style="color: var(--text-dim); text-align: center;">No catches logged in this session.</p>
+        </main>
+    </div>
+
+    <nav>
+        <div class="nav-icon nav-active" onclick="show('dash', this)">🏠</div>
+        <div class="nav-icon" onclick="show('map-view', this)">🌐</div>
+        <div class="nav-icon" onclick="show('profile', this)">👤</div>
+    </nav>
+
+    <script>
+        // MOCK DATABASE OF WORLD FISH (Examples)
+        const fishDatabase = [
+            { name: "Largemouth Bass", sci: "Micropterus salmoides", status: "Stable", edibility: "Good", notes: "Aggressive feeder. Loves structure." },
+            { name: "Red Drum", sci: "Sciaenops ocellatus", status: "Protected", edibility: "Excellent", notes: "Listen for the drumming sound." },
+            { name: "Lionfish", sci: "Pterois", status: "Invasive", edibility: "Caution", notes: "DANGER: Venomous spines. Remove before cooking." },
+            { name: "Great White Shark", sci: "Carcharodon carcharias", status: "Endangered", edibility: "Illegal", notes: "Apex predator. Release immediately." }
+        ];
+
+        function show(id, el) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
+            document.getElementById(id).classList.add('active-screen');
+            document.querySelectorAll('.nav-icon').forEach(n => n.classList.remove('nav-active'));
+            el.classList.add('nav-active');
+        }
+
+        function startScanning() {
+            document.getElementById('vision-overlay').style.display = 'flex';
+            
+            // Simulate AI Processing time
+            setTimeout(() => {
+                document.getElementById('vision-overlay').style.display = 'none';
+                logFish();
+            }, 3000);
+        }
+
+        function logFish() {
+            // Pick a random fish from our "World Database" for the demo
+            const fish = fishDatabase[Math.floor(Math.random() * fishDatabase.length)];
+            
+            navigator.geolocation.getCurrentPosition(pos => {
+                const catchData = {
+                    ...fish,
+                    lat: pos.coords.latitude,
+                    lon: pos.coords.longitude,
+                    time: new Date().toLocaleTimeString()
+                };
+
+                displayResult(catchData);
+                addMapPin(catchData);
+                addToLog(catchData);
+            });
+        }
+
+        function displayResult(data) {
+            const container = document.getElementById('id-result');
+            const edibilityTag = data.edibility === "Caution" ? "tag-danger" : "tag-safe";
+            
+            container.innerHTML = `
+                <div class="fish-data-card">
+                    <div style="font-size: 0.7rem; color: var(--accent); font-weight: bold;">MATCH FOUND</div>
+                    <h2 style="margin: 5px 0;">${data.name}</h2>
+                    <p style="font-style: italic; font-size: 0.8rem; color: var(--text-dim);">${data.sci}</p>
+                    <div style="margin: 10px 0;">
+                        <span class="tag tag-safe">${data.status}</span>
+                        <span class="tag ${edibilityTag}">Eat: ${data.edibility}</span>
+                    </div>
+                    <p style="font-size: 0.85rem; border-top: 1px solid #333; padding-top: 10px;">
+                        <b>Pro Tip:</b> ${data.notes}
+                    </p>
+                </div>
+            `;
+        }
+
+        function addMapPin(data) {
+            const map = document.getElementById('map-area');
+            const pin = document.createElement('div');
+            pin.className = 'pin';
+            pin.innerHTML = '🐟';
+            pin.style.left = Math.random() * 80 + 10 + '%';
+            pin.style.top = Math.random() * 80 + 10 + '%';
+            map.appendChild(pin);
+        }
+
+        function addToLog(data) {
+            const log = document.getElementById('log-list');
+            if (log.innerHTML.includes('No catches')) log.innerHTML = '';
+            
+            const entry = document.createElement('div');
+            entry.style = "background: #161b22; padding: 15px; border-radius: 15px; margin-bottom: 10px; border-left: 4px solid var(--accent);";
+            entry.innerHTML = `
+                <div style="font-weight: bold;">${data.name}</div>
+                <div style="font-size: 0.7rem; color: var(--text-dim);">${data.time} | Riley's Location</div>
+            `;
+            log.prepend(entry);
+        }
+    </script>
+</body>
+</html>
